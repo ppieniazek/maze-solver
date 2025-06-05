@@ -128,8 +128,10 @@ class Maze:
             self.__seed = random.seed(seed)
 
         self.__create_cells()
+        time.sleep(3)
         self.__break_entrance_and_exit()
         self.__break_walls_r(0, 0)
+        self.__reset_cells_visited()
 
     def __create_cells(self):
         self.__cells = [
@@ -155,7 +157,7 @@ class Maze:
         if self.__win is None:
             return
         self.__win.redraw()
-        time.sleep(0.01)
+        time.sleep(0.05)
 
     def __break_entrance_and_exit(self):
         self.__cells[0][0].has_top_wall = False
@@ -208,3 +210,61 @@ class Maze:
                 self.__cells[i][j - 1].has_bottom_wall = False
 
             self.__break_walls_r(new_i, new_j)
+
+    def __reset_cells_visited(self):
+        for col in self.__cells:
+            for cell in col:
+                cell.visited = False
+
+    def solve(self):
+        return self._solve_r(0, 0)
+
+    def _solve_r(self, i, j):
+        self._animate()
+        cell = self.__cells[i][j]
+        cell.visited = True
+        is_end_cell = i == self.__num_cols - 1 and j == self.__num_rows - 1
+        if is_end_cell:
+            return True
+
+        left_cell_exists = i > 0
+        if left_cell_exists:
+            left_cell = self.__cells[i - 1][j]
+            if not cell.has_left_wall and not left_cell.visited:
+                cell.draw_move(left_cell)
+                if self._solve_r(i - 1, j):
+                    return True
+                else:
+                    cell.draw_move(left_cell, undo=True)
+
+        right_cell_exists = i < self.__num_cols - 1
+        if right_cell_exists:
+            right_cell = self.__cells[i + 1][j]
+            if not cell.has_right_wall and not right_cell.visited:
+                cell.draw_move(right_cell)
+                if self._solve_r(i + 1, j):
+                    return True
+                else:
+                    cell.draw_move(right_cell, undo=True)
+
+        top_cell_exists = j > 0
+        if top_cell_exists:
+            top_cell = self.__cells[i][j - 1]
+            if not cell.has_top_wall and not top_cell.visited:
+                cell.draw_move(top_cell)
+                if self._solve_r(i, j - 1):
+                    return True
+                else:
+                    cell.draw_move(top_cell, undo=True)
+
+        bottom_cell_exists = j < self.__num_rows - 1
+        if bottom_cell_exists:
+            bottom_cell = self.__cells[i][j + 1]
+            if not cell.has_bottom_wall and not bottom_cell.visited:
+                cell.draw_move(bottom_cell)
+                if self._solve_r(i, j + 1):
+                    return True
+                else:
+                    cell.draw_move(bottom_cell, undo=True)
+
+        return False
